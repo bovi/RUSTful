@@ -5,10 +5,11 @@
     "args": { "INSTALL_RUST": "true" }
   },
   "runArgs": [ "-v", "/var/run/docker.sock:/var/run/docker.sock" ],
-  "extensions": [
-    "vscoss.vscode-ansible",
-    "ms-vscode.cpptools",
-    "rust-lang.rust",
-    "matklad.rust-analyzer",
-  ]
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "rust-lang.rust-analyzer"
+      ]
+    }
+  }
 }

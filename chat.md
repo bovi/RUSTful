@@ -763,3 +763,25 @@ Here are some things you can try to diagnose the issue:
 - Check your internet connection and make sure that there are no firewall or network issues that may be preventing the extension from being installed.
 - Try rebuilding your Codespace from scratch to see if that resolves the issue. To do this, delete your existing Codespace and create a new one using the same devcontainer.json file.
 - If none of these solutions work, you can try posting on the Visual Studio Code community forum or contacting Microsoft support for further assistance.
+
+> When adding Rust Analyzer by hand from the marketplace the following code is generated: "{
+  "name": "Rust development environment",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "args": { "INSTALL_RUST": "true" }
+  },
+  "runArgs": [ "-v", "/var/run/docker.sock:/var/run/docker.sock" ],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "rust-lang.rust-analyzer"
+      ]
+    }
+  }
+}" and this actually works.
+
+It's great to hear that the Rust Analyzer extension is now installed in your Codespace!
+
+The devcontainer.json file you posted with the "rust-lang.rust-analyzer" ID was correct, so it's possible that there was a temporary issue with the Visual Studio Code marketplace or the Codespace environment that prevented the extension from being installed properly.
+
+In any case, the devcontainer.json file you posted with the "rust-lang.rust-analyzer" ID should work fine, and you can use that if you prefer. Just be aware that the extension ID format is expected to change in the future to ${publisher}.${name}, so you may need to update your devcontainer.json file again at some point.
