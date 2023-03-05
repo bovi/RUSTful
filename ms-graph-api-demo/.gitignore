@@ -1,0 +1,5 @@
+# Ignore Rust build output
+target/
+
+# Ignore Rust compiler generated files
+**/*.rs.bk
