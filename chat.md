@@ -10,13 +10,11 @@ Developers can interact with the Graph API using HTTP requests, and they can cho
 
 Some of the benefits of using Microsoft Graph API include:
 
-    Unified API endpoint: Microsoft Graph API provides a single endpoint for developers to access data across Microsoft's cloud services, which simplifies development and reduces the amount of code needed.
+- Unified API endpoint: Microsoft Graph API provides a single endpoint for developers to access data across Microsoft's cloud services, which simplifies development and reduces the amount of code needed.
 
-    Access to a wide range of data: Developers can access a wide range of data types across Microsoft's cloud services, which allows them to build applications that provide richer experiences for their users.
-
-    Security and compliance: Microsoft Graph API provides robust security features, such as OAuth 2.0 authentication and authorization, and complies with various data protection regulations, such as GDPR.
-
-    Developer tools and resources: Microsoft provides a variety of developer tools and resources, such as SDKs, code samples, and documentation, to help developers get started with Microsoft Graph API.
+- Access to a wide range of data: Developers can access a wide range of data types across Microsoft's cloud services, which allows them to build applications that provide richer experiences for their users.
+- Security and compliance: Microsoft Graph API provides robust security features, such as OAuth 2.0 authentication and authorization, and complies with various data protection regulations, such as GDPR.
+- Developer tools and resources: Microsoft provides a variety of developer tools and resources, such as SDKs, code samples, and documentation, to help developers get started with Microsoft Graph API.
 
 Overall, Microsoft Graph API provides developers with a powerful tool to build applications that integrate with Microsoft's cloud services, providing a rich and seamless experience for users.
 
@@ -25,121 +23,121 @@ Overall, Microsoft Graph API provides developers with a powerful tool to build a
 Sure, let's start by setting up the development environment and installing the necessary dependencies.
 Prerequisites
 
-    Rust programming language and cargo package manager installed.
-    Microsoft Azure account with an active subscription.
+- Rust programming language and cargo package manager installed.
+- Microsoft Azure account with an active subscription.
 
 Setup
 
-    Create a new Rust project using the following command:
+- Create a new Rust project using the following command:
 
-    sql
-
+```bash
 cargo new ms-graph-api-demo --bin
+```
 
 Change into the project directory:
 
-bash
-
+```bash
 cd ms-graph-api-demo
+```
 
 Add the following dependencies to the Cargo.toml file:
 
-toml
-
+```toml
 [dependencies]
 reqwest = { version = "0.11", features = ["json"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+```
 
-    reqwest is an HTTP client library for Rust that we'll use to make requests to the Graph API.
-    serde and serde_json are serialization and deserialization libraries for Rust that we'll use to handle JSON responses from the Graph API.
+- reqwest is an HTTP client library for Rust that we'll use to make requests to the Graph API.
+- serde and serde_json are serialization and deserialization libraries for Rust that we'll use to handle JSON responses from the Graph API.
 
 Create a new Azure Active Directory (AAD) application and grant it permissions to access the Microsoft Graph API. Follow the instructions in Microsoft's documentation to create a new app registration and grant it the necessary permissions.
 
 After creating the Azure AD application, note down the following values:
 
-    client_id: The client ID of the Azure AD application.
-    client_secret: The client secret of the Azure AD application.
-    tenant_id: The tenant ID of the Azure AD directory.
+- client_id: The client ID of the Azure AD application.
+- client_secret: The client secret of the Azure AD application.
+- tenant_id: The tenant ID of the Azure AD directory.
 
 Create a new Rust file called main.rs and add the following code:
 
-rust
+```rust
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+use std::env;
 
-    use serde::{Deserialize, Serialize};
-    use serde_json::Value;
-    use std::env;
+#[derive(Debug, Serialize, Deserialize)]
+struct User {
+    id: String,
+    display_name: String,
+}
 
-    #[derive(Debug, Serialize, Deserialize)]
-    struct User {
-        id: String,
-        display_name: String,
-    }
+#[derive(Debug, Serialize, Deserialize)]
+struct GraphResponse<T> {
+    value: Vec<T>,
+}
 
-    #[derive(Debug, Serialize, Deserialize)]
-    struct GraphResponse<T> {
-        value: Vec<T>,
-    }
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Read environment variables
+    let client_id = env::var("AZURE_CLIENT_ID")?;
+    let client_secret = env::var("AZURE_CLIENT_SECRET")?;
+    let tenant_id = env::var("AZURE_TENANT_ID")?;
 
-    #[tokio::main]
-    async fn main() -> Result<(), Box<dyn std::error::Error>> {
-        // Read environment variables
-        let client_id = env::var("AZURE_CLIENT_ID")?;
-        let client_secret = env::var("AZURE_CLIENT_SECRET")?;
-        let tenant_id = env::var("AZURE_TENANT_ID")?;
+    // Build authentication token URL
+    let auth_url = format!(
+        "https://login.microsoftonline.com/{}/oauth2/v2.0/token",
+        tenant_id
+    );
 
-        // Build authentication token URL
-        let auth_url = format!(
-            "https://login.microsoftonline.com/{}/oauth2/v2.0/token",
-            tenant_id
-        );
+    // Build token request body
+    let token_request_body = format!(
+        "client_id={}&scope=https://graph.microsoft.com/.default&client_secret={}&grant_type=client_credentials",
+        client_id, client_secret
+    );
 
-        // Build token request body
-        let token_request_body = format!(
-            "client_id={}&scope=https://graph.microsoft.com/.default&client_secret={}&grant_type=client_credentials",
-            client_id, client_secret
-        );
+    // Send token request and parse response
+    let client = reqwest::Client::new();
+    let token_response = client
+        .post(&auth_url)
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .body(token_request_body)
+        .send()
+        .await?
+        .json::<Value>()
+        .await?;
 
-        // Send token request and parse response
-        let client = reqwest::Client::new();
-        let token_response = client
-            .post(&auth_url)
-            .header("Content-Type", "application/x-www-form-urlencoded")
-            .body(token_request_body)
-            .send()
-            .await?
-            .json::<Value>()
-            .await?;
+    let access_token = token_response["access_token"].as_str().unwrap();
 
-        let access_token = token_response["access_token"].as_str().unwrap();
+    // Build Graph API request URL
+    let graph_url = "https://graph.microsoft.com/v1.0/users";
+    let graph_request_url = format!("{}?select=id,displayName", graph_url);
 
-        // Build Graph API request URL
-        let graph_url = "https://graph.microsoft.com/v1.0/users";
-        let graph_request_url = format!("{}?select=id,displayName", graph_url);
+    // Send Graph API request and parse response
+    let graph_response = client
+        .get(&graph_request_url)
+        .header("Authorization", format!("Bearer {}", access_token))
+        .send()
+```
 
-        // Send Graph API request and parse response
-        let graph_response = client
-            .get(&graph_request_url)
-            .header("Authorization", format!("Bearer {}", access_token))
-            .send()
-           
 > When I try "cargo new" I get "bash: cargo: command not found"
 
 It looks like the cargo command is not installed on your system, or it's not in your system's PATH environment variable.
 
 You can check if cargo is installed by running the following command:
 
-css
-
+```bash
 cargo --version
+```
 
 If cargo is not installed, you can download and install it by following the instructions on the official Rust website.
 
 If cargo is installed but not in your system's PATH environment variable, you can add it by running the following command:
 
-bash
-
+```bash
 export PATH="$HOME/.cargo/bin:$PATH"
+```
 
 This command adds the ~/.cargo/bin directory (where cargo is installed) to your PATH environment variable. You can add this command to your shell's startup file (such as ~/.bashrc or ~/.zshrc) to make the change permanent.
 
@@ -149,19 +147,16 @@ If you're using a codespace on Github and the cargo command is not found, you ma
 
 Here's how you can install Rust and cargo on a Github codespace:
 
-    Open your codespace in the browser.
+- Open your codespace in the browser.
+- Open a terminal window.
+- Run the following command to download and run the Rust installer:
 
-    Open a terminal window.
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
 
-    Run the following command to download and run the Rust installer:
-
-    javascript
-
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-
-    Follow the prompts to install Rust and cargo. You can accept the defaults.
-
-    Once Rust and cargo are installed, you should be able to use the cargo command in your codespace.
+- Follow the prompts to install Rust and cargo. You can accept the defaults.
+- Once Rust and cargo are installed, you should be able to use the cargo command in your codespace.
 
 If you're still having issues, you can try restarting your codespace to ensure that the PATH environment variable is updated with the newly installed Rust and cargo binaries.
 
@@ -173,23 +168,25 @@ Please follow the steps outlined in my previous response to create a new Rust pr
 
 After that, you need to set the environment variables for your Azure AD application. Specifically, you need to set the following environment variables in your codespace:
 
-    AZURE_CLIENT_ID: The client ID of the Azure AD application.
-    AZURE_CLIENT_SECRET: The client secret of the Azure AD application.
-    AZURE_TENANT_ID: The tenant ID of the Azure AD directory.
+- AZURE_CLIENT_ID: The client ID of the Azure AD application.
+- AZURE_CLIENT_SECRET: The client secret of the Azure AD application.
+- AZURE_TENANT_ID: The tenant ID of the Azure AD directory.
 
 You can set these environment variables by running the following commands in your terminal window:
 
-bash
-
+```bash
 export AZURE_CLIENT_ID=<your client ID>
 export AZURE_CLIENT_SECRET=<your client secret>
 export AZURE_TENANT_ID=<your tenant ID>
+```
 
 Make sure to replace <your client ID>, <your client secret>, and <your tenant ID> with the actual values for your Azure AD application.
 
 Finally, you can run the application by running the following command:
 
+```bash
 cargo run
+```
 
 This will compile and run the Rust code. You should see a list of users with their IDs and display names printed in the terminal window.
 
@@ -197,8 +194,7 @@ This will compile and run the Rust code. You should see a list of users with the
 
 I apologize for that. Here's the complete code for the main function:
 
-rust
-
+```rust
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::env;
@@ -266,6 +262,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+```
 
 This code sends an HTTP request to the Microsoft Graph API to retrieve a list of users, and prints their IDs and display names to the console.
 
@@ -279,9 +276,9 @@ tokio is a popular asynchronous runtime for Rust, and it's used extensively in R
 
 To add tokio to our project, you can add the following line to the [dependencies] section in your Cargo.toml file:
 
-makefile
-
+```toml
 tokio = { version = "1.16", features = ["full"] }
+```
 
 This specifies that we want to use version 1.16 of the tokio crate, and that we want to enable all its features.
 
@@ -299,13 +296,13 @@ To create a .gitignore file, simply create a new file named .gitignore in the ro
 
 For example, if you want to ignore all files generated by the Rust compiler and the target directory (which contains the build output), you can add the following lines to your .gitignore file:
 
-python
-
+```
 # Ignore Rust build output
 target/
 
 # Ignore Rust compiler generated files
 **/*.rs.bk
+```
 
 You can add as many patterns as you like, each on a separate line. You can also use wildcards, such as * and ?, to match multiple files or directories with a single pattern.
 
@@ -319,15 +316,13 @@ filter-branch is a powerful Git command that lets you modify the commit history 
 
 To remove a large file or directory from your Git repository and its history, you can follow these steps:
 
-    Create a backup of your repository before running any Git commands. This is important in case something goes wrong and you need to restore the repository to its previous state.
+- Create a backup of your repository before running any Git commands. This is important in case something goes wrong and you need to restore the repository to its previous state.
+- Install the git-filter-repo tool. This is a newer, faster, and safer alternative to filter-branch. You can install it by following the instructions on the official Git website.
+- Run the following command to remove the large file or directory and its history from the repository:
 
-    Install the git-filter-repo tool. This is a newer, faster, and safer alternative to filter-branch. You can install it by following the instructions on the official Git website.
-
-    Run the following command to remove the large file or directory and its history from the repository:
-
-    css
-
+```bash
 git filter-repo --invert-paths --path <path/to/large/file/or/directory>
+```
 
 Replace <path/to/large/file/or/directory> with the path to the file or directory you want to remove.
 
@@ -335,19 +330,19 @@ This command creates a new commit history that excludes the specified file or di
 
 Verify that the large file or directory has been removed from the repository by checking the contents of the latest commit. You can do this by running the following command:
 
-bash
-
+```bash
 git log -1 --stat
+```
 
 This should show the list of files that were modified in the latest commit, without the large file or directory.
 
 Force push the new commit history to the remote repository:
 
-css
+```bash
+git push --force origin master
+```
 
-    git push --force origin master
-
-    This replaces the existing commit history with the new, filtered history that excludes the large file or directory.
+This replaces the existing commit history with the new, filtered history that excludes the large file or directory.
 
 After following these steps, your Git repository should be smaller and no longer contain the large file or directory. However, please be careful when modifying the commit history of a repository, as it can have unintended consequences and may affect other contributors to the repository.
 
@@ -355,29 +350,28 @@ After following these steps, your Git repository should be smaller and no longer
 
 You can install git-filter-repo in your Codespace by following these steps:
 
-    Open a terminal window in your Codespace.
+- Open a terminal window in your Codespace.
+- Install the python3 package, which is required to run git-filter-repo, by running the following command:
 
-    Install the python3 package, which is required to run git-filter-repo, by running the following command:
-
-    sql
-
+```bash
 sudo apt-get update && sudo apt-get install python3
+```
 
 Install git-filter-repo by running the following command:
 
-sql
-
+```bash
 sudo apt-get update && sudo apt-get install git-filter-repo
+```
 
 This command updates the package repository and installs the git-filter-repo package.
 
 Verify that git-filter-repo is installed by running the following command:
 
-css
+```bash
+git-filter-repo --version
+```
 
-    git-filter-repo --version
-
-    This should print the version number of git-filter-repo.
+This should print the version number of git-filter-repo.
 
 After following these steps, you should be able to use git-filter-repo in your Codespace to filter the commit history of your Git repository.
 
@@ -387,29 +381,29 @@ I apologize for the confusion. It looks like git-filter-repo is not available in
 
 You can install git-filter-repo using pip, the Python package manager. Here are the steps to install git-filter-repo using pip:
 
-    Open a terminal window in your Codespace.
+- Open a terminal window in your Codespace.
 
-    Install the python3-pip package, which is required to run pip, by running the following command:
+- Install the python3-pip package, which is required to run pip, by running the following command:
 
-    sql
-
+```bash
 sudo apt-get update && sudo apt-get install python3-pip
+```
 
 Install git-filter-repo using pip by running the following command:
 
-python
-
+```bash
 sudo python3 -m pip install git-filter-repo
+```
 
 This command installs git-filter-repo using pip.
 
 Verify that git-filter-repo is installed by running the following command:
 
-css
+```bash
+git-filter-repo --version
+```
 
-    git-filter-repo --version
-
-    This should print the version number of git-filter-repo.
+This should print the version number of git-filter-repo.
 
 After following these steps, you should be able to use git-filter-repo in your Codespace to filter the commit history of your Git repository.
 
@@ -419,31 +413,31 @@ This error message indicates that you should perform the filter-branch operation
 
 Here's how you can create a fresh clone of your repository and perform the filter-branch operation:
 
-    Create a new directory for the fresh clone:
+Create a new directory for the fresh clone:
 
-    bash
-
+```bash
 mkdir fresh-clone
+```
 
 Clone your repository into the new directory:
 
-php
-
+```bash
 git clone <repository-url> fresh-clone
+```
 
 Replace <repository-url> with the URL of your Git repository.
 
 Change to the new directory:
 
-bash
-
+```bash
 cd fresh-clone
+```
 
 Run the filter-branch command to remove the large file or directory and its history:
 
-css
-
+```bash
 git filter-repo --invert-paths --path <path/to/large/file/or/directory>
+```
 
 Replace <path/to/large/file/or/directory> with the path to the file or directory you want to remove.
 
@@ -451,19 +445,19 @@ This command creates a new commit history that excludes the specified file or di
 
 Verify that the large file or directory has been removed from the repository by checking the contents of the latest commit. You can do this by running the following command:
 
-bash
-
+```bash
 git log -1 --stat
+```
 
 This should show the list of files that were modified in the latest commit, without the large file or directory.
 
 Force push the new commit history to the remote repository:
 
-css
+```bash
+git push --force origin master
+```
 
-    git push --force origin master
-
-    This replaces the existing commit history with the new, filtered history that excludes the large file or directory.
+This replaces the existing commit history with the new, filtered history that excludes the large file or directory.
 
 After following these steps, your Git repository should be smaller and no longer contain the large file or directory. Please be careful when modifying the commit history of a repository, as it can have unintended consequences and may affect other contributors to the repository.
 
@@ -475,27 +469,29 @@ Regarding the error message you're seeing, it indicates that Git is unable to fi
 
 Here's how you can push the new commit history to the remote repository:
 
-    Verify that your local repository is connected to the remote repository by running the following command:
+Verify that your local repository is connected to the remote repository by running the following command:
 
+```bash
 git remote -v
+```
 
 This should show the name and URL of the remote repository that your local repository is connected to.
 
 If your local repository is not connected to a remote repository, you can add one using the following command:
 
-csharp
-
+```bash
 git remote add origin <repository-url>
+```
 
 Replace <repository-url> with the URL of your remote Git repository.
 
 Push the new commit history to the remote repository using the following command:
 
-css
+```bash
+git push --force origin main
+```
 
-    git push --force origin main
-
-    This replaces the existing commit history with the new, filtered history that excludes the large file or directory.
+This replaces the existing commit history with the new, filtered history that excludes the large file or directory.
 
 After following these steps, your Git repository should be smaller and no longer contain the large file or directory. Please be careful when modifying the commit history of a repository, as it can have unintended consequences and may affect other contributors to the repository.
 
@@ -507,12 +503,10 @@ The devcontainer.json file is a configuration file for Visual Studio Code that d
 
 Here's how you can set up a devcontainer.json file to install cargo in your Codespace:
 
-    Create a new file named .devcontainer/devcontainer.json in the root of your repository.
+- Create a new file named .devcontainer/devcontainer.json in the root of your repository.
+- Add the following JSON code to the file:
 
-    Add the following JSON code to the file:
-
-    json
-
+```json
 {
   "name": "Rust development environment",
   "build": {
@@ -527,6 +521,7 @@ Here's how you can set up a devcontainer.json file to install cargo in your Code
     "matklad.rust-analyzer"
   ]
 }
+```
 
 This configuration file specifies that you want to install cargo in the development container, which is a lightweight Linux environment that runs alongside your Codespace. It also specifies some extensions that are useful for Rust development.
 
@@ -534,21 +529,21 @@ Create a new file named Dockerfile in the root of your repository.
 
 Add the following code to the file:
 
-sql
+```Dockerfile
+FROM mcr.microsoft.com/vscode/devcontainers/rust:1
 
-    FROM mcr.microsoft.com/vscode/devcontainers/rust:1
+ARG INSTALL_RUST="false"
 
-    ARG INSTALL_RUST="false"
+RUN if [ "$INSTALL_RUST" = "true" ]; then \
+    rustup default stable && \
+    rustup component add rustfmt && \
+    rustup component add clippy; \
+    fi
+```
 
-    RUN if [ "$INSTALL_RUST" = "true" ]; then \
-        rustup default stable && \
-        rustup component add rustfmt && \
-        rustup component add clippy; \
-      fi
+This Dockerfile specifies that you want to use the mcr.microsoft.com/vscode/devcontainers/rust:1 base image, which is a pre-built container image that contains Rust and other development tools. It also defines an argument named INSTALL_RUST, which is used to specify whether you want to install cargo and other Rust components.
 
-    This Dockerfile specifies that you want to use the mcr.microsoft.com/vscode/devcontainers/rust:1 base image, which is a pre-built container image that contains Rust and other development tools. It also defines an argument named INSTALL_RUST, which is used to specify whether you want to install cargo and other Rust components.
-
-    Commit and push the new files to your repository.
+Commit and push the new files to your repository.
 
 Once you have set up the devcontainer.json file and the Dockerfile, you can open your Codespace and Visual Studio Code will automatically start a development container with cargo installed. This container runs alongside your Codespace and provides a consistent environment for your development work.
 
@@ -562,19 +557,14 @@ The rust-analyzer extension is a newer, faster, and more feature-rich alternativ
 
 To fix this issue, you can disable one of the extensions in Visual Studio Code. Here's how:
 
-    Open Visual Studio Code.
+- Open Visual Studio Code.
+- Click on the Extensions icon in the left sidebar (or press Ctrl+Shift+X on Windows/Linux, or Cmd+Shift+X on Mac).
+- Search for rust in the search bar.
+- You should see both the Rust and rust-analyzer extensions in the list of installed extensions.
+- Click on the gear icon next to one of the extensions to open its settings.
+- Click on the Disable button to disable the extension.
 
-    Click on the Extensions icon in the left sidebar (or press Ctrl+Shift+X on Windows/Linux, or Cmd+Shift+X on Mac).
-
-    Search for rust in the search bar.
-
-    You should see both the Rust and rust-analyzer extensions in the list of installed extensions.
-
-    Click on the gear icon next to one of the extensions to open its settings.
-
-    Click on the Disable button to disable the extension.
-
-    Repeat steps 5-6 for the other extension.
+Repeat steps 5-6 for the other extension.
 
 After disabling one of the extensions, you should no longer see the error message and Rust language support should continue to work as expected in Visual Studio Code. If you want to switch back to the other extension in the future, you can simply enable it again in the Extensions panel.
 
@@ -584,27 +574,23 @@ You can configure your devcontainer.json file to disable the Rust extension and 
 
 Here's how you can modify your devcontainer.json file to disable the Rust extension:
 
-    Open your devcontainer.json file.
+- Open your devcontainer.json file.
+- Find the extensions property in the file.
+- Replace the following line:
 
-    Find the extensions property in the file.
-
-    Replace the following line:
-
-    python
-
+```json
 "rust-lang.rust",
+```
 
 with:
 
-python
+```json
+"rust-lang.rust-analyzer",
+```
 
-    "rust-lang.rust-analyzer",
-
-    This line removes the Rust extension and adds the rust-analyzer extension to the list of installed extensions.
-
-    Note that the rust-analyzer extension provides all the features of the Rust extension and more, so you don't need to have both extensions installed.
-
-    Save and close the devcontainer.json file.
+- This line removes the Rust extension and adds the rust-analyzer extension to the list of installed extensions.
+- Note that the rust-analyzer extension provides all the features of the Rust extension and more, so you don't need to have both extensions installed.
+- Save and close the devcontainer.json file.
 
 After modifying your devcontainer.json file, you can rebuild your Codespace to apply the changes. The next time you open your Codespace, only the rust-analyzer extension should be enabled in Visual Studio Code. This should resolve the conflict between the extensions and ensure that Rust language support works correctly in Visual Studio Code.
 
@@ -618,20 +604,17 @@ If you don't need these extensions for your project, you can remove them from yo
 
 Here's how you can remove the cpptools and ansible extensions from your devcontainer.json file:
 
-    Open your devcontainer.json file.
+- Open your devcontainer.json file.
+- Find the extensions property in the file.
+- Remove the following lines:
 
-    Find the extensions property in the file.
+```json
+"vscoss.vscode-ansible",
+"ms-vscode.cpptools",
+```
 
-    Remove the following lines:
-
-    python
-
-    "vscoss.vscode-ansible",
-    "ms-vscode.cpptools",
-
-    These lines remove the ansible and cpptools extensions from the list of installed extensions.
-
-    Save and close the devcontainer.json file.
+- These lines remove the ansible and cpptools extensions from the list of installed extensions.
+- Save and close the devcontainer.json file.
 
 After modifying your devcontainer.json file, you can rebuild your Codespace to apply the changes. The next time you open your Codespace, only the rust-analyzer extension should be enabled in Visual Studio Code. This should simplify your development environment and reduce clutter in Visual Studio Code.
 
@@ -657,37 +640,33 @@ The customizations/vscode/extensions property allows you to specify a list of ex
 
 Here's how you can modify your devcontainer.json file to use the customizations/vscode/extensions property:
 
-    Open your devcontainer.json file.
+- Open your devcontainer.json file.
+- Find the extensions property in the file.
+- Replace the following line:
 
-    Find the extensions property in the file.
-
-    Replace the following line:
-
-    python
-
+```json
 "rust-lang.rust-analyzer",
+```
 
 with:
 
-json
-
+```json
 {
     "id": "rust-lang.rust-analyzer"
 },
+```
 
 This line removes the Rust extension and adds the rust-analyzer extension to the list of installed extensions, but in the new format.
 
 Find the extensions property and replace it with:
 
-swift
+```json
+"postCreateCommand": "mkdir -p /usr/local/etc/vscode-server/customizations/vscode && echo '{\"extensions\":[{\"id\":\"rust-lang.rust-analyzer\"}]}' > /usr/local/etc/vscode-server/customizations/vscode/extensions.json"
+```
 
-    "postCreateCommand": "mkdir -p /usr/local/etc/vscode-server/customizations/vscode && echo '{\"extensions\":[{\"id\":\"rust-lang.rust-analyzer\"}]}' > /usr/local/etc/vscode-server/customizations/vscode/extensions.json"
-
-    This line sets a postCreateCommand that creates a extensions.json file in the customizations/vscode directory with the rust-analyzer extension listed.
-
-    Note that this command creates the customizations/vscode directory and the extensions.json file if they don't exist. If you already have a customizations/vscode/extensions.json file in your development container, you should update its contents to include the rust-analyzer extension.
-
-    Save and close the devcontainer.json file.
+- This line sets a postCreateCommand that creates a extensions.json file in the customizations/vscode directory with the rust-analyzer extension listed.
+- Note that this command creates the customizations/vscode directory and the extensions.json file if they don't exist. If you already have a customizations/vscode/extensions.json file in your development container, you should update its contents to include the rust-analyzer extension.
+- Save and close the devcontainer.json file.
 
 After modifying your devcontainer.json file, you can rebuild your Codespace to apply the changes. The next time you open your Codespace, only the rust-analyzer extension should be enabled in Visual Studio Code, without any warnings or issues related to the extensions property.
 
@@ -699,23 +678,21 @@ To use the customizations/vscode/extensions property, you need to specify the li
 
 Here's how you can modify your devcontainer.json file to use the customizations/vscode/extensions property:
 
-    Open your devcontainer.json file.
+- Open your devcontainer.json file.
+- Replace the extensions property with the following:
 
-    Replace the extensions property with the following:
-
-    json
-
-    "customizations": {
-        "vscode": {
-            "extensions": [
-                { "id": "rust-lang.rust-analyzer" }
-            ]
-        }
+```json
+"customizations": {
+    "vscode": {
+        "extensions": [
+            { "id": "rust-lang.rust-analyzer" }
+        ]
     }
+}
+```
 
-    This sets the customizations/vscode/extensions property to an array of objects with the id field set to rust-lang.rust-analyzer.
-
-    Save and close the devcontainer.json file.
+- This sets the customizations/vscode/extensions property to an array of objects with the id field set to rust-lang.rust-analyzer.
+- Save and close the devcontainer.json file.
 
 After modifying your devcontainer.json file, you can rebuild your Codespace to apply the changes. The next time you open your Codespace, only the rust-analyzer extension should be enabled in Visual Studio Code, and the warning message should no longer appear.
 
@@ -725,19 +702,17 @@ I apologize for the confusion. It appears that the customizations/vscode/extensi
 
 Here's how you can modify your devcontainer.json file to use the extensions property:
 
-    Open your devcontainer.json file.
+- Open your devcontainer.json file.
+- Replace the customizations property with the following:
 
-    Replace the customizations property with the following:
+```json
+"extensions": [
+    { "id": "rust-lang.rust-analyzer" }
+]
+```
 
-    json
-
-    "extensions": [
-        { "id": "rust-lang.rust-analyzer" }
-    ]
-
-    This sets the extensions property to an array of objects with the id field set to rust-lang.rust-analyzer.
-
-    Save and close the devcontainer.json file.
+- This sets the extensions property to an array of objects with the id field set to rust-lang.rust-analyzer.
+- Save and close the devcontainer.json file.
 
 After modifying your devcontainer.json file, you can rebuild your Codespace to apply the changes. The next time you open your Codespace, only the rust-analyzer extension should be enabled in Visual Studio Code, and the warning message should no longer appear.
 
@@ -755,13 +730,11 @@ If you're using a different extension and seeing this warning message, make sure
 
 If you're not seeing the Rust Analyzer extension installed in your Codespace, there may be a few reasons why:
 
-    You may have made a mistake in your devcontainer.json file. Double-check that you have the correct ID for the Rust Analyzer extension and that it's included in the extensions or customizations/vscode/extensions property.
+- You may have made a mistake in your devcontainer.json file. Double-check that you have the correct ID for the Rust Analyzer extension and that it's included in the extensions or customizations/vscode/extensions property.
+- There may be a network or connectivity issue preventing the extension from being installed. Try restarting your Codespace and rebuilding it, or checking your network connection.
+- There may be an issue with the Visual Studio Code marketplace or the extension itself. You can try installing the extension manually by searching for it in the Visual Studio Code marketplace and clicking the Install button.
 
-    There may be a network or connectivity issue preventing the extension from being installed. Try restarting your Codespace and rebuilding it, or checking your network connection.
-
-    There may be an issue with the Visual Studio Code marketplace or the extension itself. You can try installing the extension manually by searching for it in the Visual Studio Code marketplace and clicking the Install button.
-
-    If you're using a self-hosted version of Codespaces, there may be a configuration issue preventing extensions from being installed. Check your server logs and configuration files for any errors or issues related to extensions.
+If you're using a self-hosted version of Codespaces, there may be a configuration issue preventing extensions from being installed. Check your server logs and configuration files for any errors or issues related to extensions.
 
 If none of these solutions work, you can try contacting Microsoft support or posting on the Visual Studio Code community forum for further assistance.
 
@@ -785,12 +758,8 @@ The devcontainer.json file you provided looks correct, and it should install the
 
 Here are some things you can try to diagnose the issue:
 
-    Check the logs for your Codespace to see if there are any errors or issues related to the installation of the Rust Analyzer extension. You can access the logs by clicking the Logs button in the bottom panel of your Codespace.
-
-    Try installing the extension manually from the Visual Studio Code marketplace to see if there are any issues with the extension or the marketplace. To do this, search for the Rust Analyzer extension in the marketplace and click the Install button.
-
-    Check your internet connection and make sure that there are no firewall or network issues that may be preventing the extension from being installed.
-
-    Try rebuilding your Codespace from scratch to see if that resolves the issue. To do this, delete your existing Codespace and create a new one using the same devcontainer.json file.
-
-If none of these solutions work, you can try posting on the Visual Studio Code community forum or contacting Microsoft support for further assistance.
+- Check the logs for your Codespace to see if there are any errors or issues related to the installation of the Rust Analyzer extension. You can access the logs by clicking the Logs button in the bottom panel of your Codespace.
+- Try installing the extension manually from the Visual Studio Code marketplace to see if there are any issues with the extension or the marketplace. To do this, search for the Rust Analyzer extension in the marketplace and click the Install button.
+- Check your internet connection and make sure that there are no firewall or network issues that may be preventing the extension from being installed.
+- Try rebuilding your Codespace from scratch to see if that resolves the issue. To do this, delete your existing Codespace and create a new one using the same devcontainer.json file.
+- If none of these solutions work, you can try posting on the Visual Studio Code community forum or contacting Microsoft support for further assistance.
