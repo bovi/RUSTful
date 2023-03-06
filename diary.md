@@ -15,9 +15,19 @@ fe7c5904919ca22106fd4dcf7bf2e79fe3f846f7,
 Conversation with ChatGPT:
 https://github.com/bovi/RUSTful/blob/main/chat.md?plain=1#L1-787
 
+General notes:
+ChatGPT can provide accurate API addresses. There are some bugs in the
+Rust code it created but when I pointed it to it, it always fixed them.
+
 ## Day 2 (2023-03-06)
 
 The following commits were performed today:
+8a7ccbe9c321f317726bde129d0d5911fdbdc465
 
 Conversation with ChatGPT:
 https://github.com/bovi/RUSTful/blob/main/chat.md?plain=1#L788-929
+
+General notes:
+ChatGPT mistakenly used the wrong GET and POST parameter. After asking
+it was able to fix it. Also today was the first successfull call to list
+all users.
