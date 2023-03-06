@@ -5,12 +5,34 @@ use std::env;
 #[derive(Debug, Serialize, Deserialize)]
 struct User {
     id: String,
+    #[serde(rename = "displayName")]
     display_name: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 struct GraphResponse<T> {
     value: Vec<T>,
+}
+
+// struct for error
+#[derive(Debug, Serialize, Deserialize)]
+struct GraphError {
+    error: GraphErrorDetail,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct GraphErrorDetail {
+    code: String,
+    message: String,
+    #[serde(rename = "innerError")]
+    inner_error: GraphErrorDetailInner,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct GraphErrorDetailInner {
+    date: String,
+    #[serde(rename = "request-id")]
+    request_id: String,
 }
 
 #[tokio::main]
@@ -49,20 +71,36 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Build graph request URL
     // NOTE: from here Co-Pilot copied the comments from ChatGPT
+    // NOTE: ChatGPT made a mistake here by using select instead of $select
     let graph_url = "https://graph.microsoft.com/v1.0/users";
-    let graph_request_url = format!("{}?select=id,displayName", graph_url);
+    let graph_request_url = format!("{}?$select=id,displayName", graph_url);
 
     // Send Graph API request and parse response
+    // write raw response to variable
     let graph_response = client
         .get(&graph_request_url)
         .header("Authorization", format!("Bearer {}", access_token))
         .send()
-        .await?
-        .json::<GraphResponse<User>>()
         .await?;
-
-    for user in graph_response.value {
-        println!("ID: {}, Display Name: {}", user.id, user.display_name);
+    
+    match graph_response.status() {
+        reqwest::StatusCode::OK => {
+            let graph_response = graph_response.json::<GraphResponse<User>>().await?;
+            for user in graph_response.value {
+                println!("ID: {}, Display Name: {}", user.id, user.display_name);
+            }
+        }
+        _ => {
+            let error = graph_response.json::<GraphError>().await?.error;
+            match error.code.as_str() {
+                "Authorization_RequestDenied" => {
+                    println!("Authorization Faild: {}", error.message);
+                }
+                _ => {
+                    println!("Error: {}", error.message);
+                }
+            }
+        }
     }
 
     Ok(())

@@ -765,23 +765,165 @@ Here are some things you can try to diagnose the issue:
 - If none of these solutions work, you can try posting on the Visual Studio Code community forum or contacting Microsoft support for further assistance.
 
 > When adding Rust Analyzer by hand from the marketplace the following code is generated: "{
-  "name": "Rust development environment",
-  "build": {
-    "dockerfile": "Dockerfile",
-    "args": { "INSTALL_RUST": "true" }
-  },
-  "runArgs": [ "-v", "/var/run/docker.sock:/var/run/docker.sock" ],
-  "customizations": {
-    "vscode": {
-      "extensions": [
-        "rust-lang.rust-analyzer"
-      ]
-    }
-  }
-}" and this actually works.
+> "name": "Rust development environment",
+> "build": {
+>   "dockerfile": "Dockerfile",
+>   "args": { "INSTALL_RUST": "true" }
+> },
+> "runArgs": [ "-v", "/var/run/docker.sock:/var/run/docker.sock" ],
+> "customizations": {
+>   "vscode": {
+>      "extensions": [
+>       "rust-lang.rust-analyzer"
+>      ]
+>    }
+>  }
+> }" and this actually works.
 
 It's great to hear that the Rust Analyzer extension is now installed in your Codespace!
 
 The devcontainer.json file you posted with the "rust-lang.rust-analyzer" ID was correct, so it's possible that there was a temporary issue with the Visual Studio Code marketplace or the Codespace environment that prevented the extension from being installed properly.
 
 In any case, the devcontainer.json file you posted with the "rust-lang.rust-analyzer" ID should work fine, and you can use that if you prefer. Just be aware that the extension ID format is expected to change in the future to ${publisher}.${name}, so you may need to update your devcontainer.json file again at some point.
+
+> I receive "Error: reqwest::Error { kind: Decode, source: Error("missing field `value`", line: 1, column: 255) }" when calling cargo run with the tokens set.
+
+The error message you're seeing suggests that there's an issue with parsing the JSON response from the Microsoft Graph API. Specifically, the error message indicates that the JSON response is missing a required field named value.
+
+Here are a few things you can try to diagnose and fix the issue:
+
+- Check your authentication tokens to make sure that they are correct and have the necessary permissions to access the Microsoft Graph API. You can also try regenerating your tokens to make sure that there are no issues with the tokens themselves.
+- Make sure that you are using the correct endpoint and API version for the Microsoft Graph API. The API may have changed since this code was last updated, so it's possible that there are issues with the current version of the API.
+- Check your code to make sure that you are parsing the JSON response correctly. Specifically, make sure that you are accessing the value field in the JSON response and that it is present before trying to parse it.
+- Check the documentation for the Microsoft Graph API to see if there are any known issues or limitations with the API that could be causing this error.
+
+If none of these solutions work, you can try posting on the Microsoft Graph API community forum or contacting Microsoft support for further assistance.
+
+> No the problem seems to appear here: for user in graph_response.value {
+>        println!("ID: {}, Display Name: {}", user.id, user.display_name);
+>    }
+
+It's possible that the issue is with the graph_response object itself, rather than the value field specifically.
+
+Here are a few things you can try to diagnose and fix the issue:
+
+- Check your authentication tokens to make sure that they are correct and have the necessary permissions to access the Microsoft Graph API. You can also try regenerating your tokens to make sure that there are no issues with the tokens themselves.
+- Check the documentation for the Microsoft Graph API to make sure that you are using the correct endpoint and API version. It's possible that the API has changed since this code was last updated, so you may need to make some modifications to your code.
+- Add some debug statements to your code to print out the entire graph_response object, along with any other relevant variables, to see if there are any issues with the data that is being returned by the Microsoft Graph API.
+- Make sure that your Rust code is using the correct data types to parse the JSON response. For example, if the value field is an array, make sure that you are using a Rust vector to store the data.
+
+If none of these solutions work, you can try posting on the Microsoft Graph API community forum or contacting Microsoft support for further assistance.
+
+> After some debugging I notice the error must be here: let graph_response = client
+>        .get(&graph_request_url)
+>        .header("Authorization", format!("Bearer {}", access_token))
+>        .send()
+>        .await?
+>        .json::<GraphResponse<User>>()
+?        .await?;
+
+It's possible that the error is related to the deserialization of the JSON response from the Microsoft Graph API. Specifically, the error message you received earlier suggests that the JSON response is missing a required field named value, which could be causing issues with deserialization.
+
+Here are a few things you can try to diagnose and fix the issue:
+
+    Check your authentication tokens to make sure that they are correct and have the necessary permissions to access the Microsoft Graph API. You can also try regenerating your tokens to make sure that there are no issues with the tokens themselves.
+
+    Check the documentation for the Microsoft Graph API to make sure that you are using the correct endpoint and API version. It's possible that the API has changed since this code was last updated, so you may need to make some modifications to your code.
+
+    Check the deserialization code in your Rust program to make sure that it is correctly parsing the JSON response from the Microsoft Graph API. Specifically, make sure that the deserialization code is correctly handling any missing or optional fields in the JSON response.
+
+    Add some debug statements to your code to print out the JSON response from the Microsoft Graph API, as well as any relevant Rust data structures, to see if there are any issues with the data that is being returned or parsed.
+
+If none of these solutions work, you can try posting on the Microsoft Graph API community forum or contacting Microsoft support for further assistance.
+
+> I'm receiving an error message in the JSON: Unrecognized query argument specified: 'select'."
+
+The error message you're seeing suggests that there's an issue with the query parameters that you're passing to the Microsoft Graph API. Specifically, the error message indicates that the select query parameter is not recognized by the API.
+
+Here are a few things you can try to diagnose and fix the issue:
+
+- Check the documentation for the Microsoft Graph API to make sure that the select query parameter is supported by the API and that you are using it correctly. It's possible that the API has changed since this code was last updated, so you may need to make some modifications to your code.
+- Check the code that constructs the query URL to make sure that the select query parameter is being correctly appended to the URL. Specifically, make sure that the parameter name is spelled correctly and that you are passing the correct value.
+- Try removing the select query parameter from the URL and see if the error persists. If the error goes away, it's possible that there is an issue with the way that you are using the select parameter.
+- Check the authentication tokens that you are using to make sure that they have the necessary permissions to access the data that you are requesting. It's possible that the error is related to a permissions issue rather than a query parameter issue.
+- If none of these solutions work, you can try posting on the Microsoft Graph API community forum or contacting Microsoft support for further assistance.
+
+> It seems the get parameter your defined here: "let graph_request_url = format!("{}?select=id,displayName", graph_url);" are not correct. select is not a recognized query argument.
+
+You're correct that the select query parameter is not recognized by the Microsoft Graph API. The correct query parameter for selecting specific fields is actually $select.
+
+Here's an updated version of the code that should work:
+
+```rust
+let graph_request_url = format!("{}?$select=id,displayName", graph_url);
+```
+
+By using $select instead of select, the query parameter should be recognized by the Microsoft Graph API and return the expected fields.
+
+> That works. But I would like to handle errors coming back from the API. At the moment the tool fails when value is not presented. Instead the error property should be handled.
+
+Handling errors from the Microsoft Graph API is important to ensure that your Rust program can gracefully handle any issues that may occur while accessing the API.
+
+To handle errors returned by the API, you can use the Response object returned by the reqwest::Client to check the HTTP status code of the response. If the status code indicates an error (e.g. a 4xx or 5xx error code), you can handle the error accordingly.
+
+Here's an example of how you could modify the code to handle errors returned by the Microsoft Graph API:
+
+```rust
+let graph_response = client
+    .get(&graph_request_url)
+    .header("Authorization", format!("Bearer {}", access_token))
+    .send()
+    .await?;
+
+match graph_response.status() {
+    StatusCode::OK => {
+        // Deserialize the JSON response into a Rust struct
+        let graph_data = graph_response.json::<GraphResponse<User>>().await?;
+
+        // Print out the data
+        for user in graph_data.value {
+            println!("ID: {}, Display Name: {}", user.id, user.display_name);
+        }
+    }
+    _ => {
+        // Handle any errors returned by the API
+        let error_message = graph_response.text().await?;
+        println!("Error: {}", error_message);
+    }
+}
+```
+
+In this example, we use a match statement to check the status code of the response. If the status code is StatusCode::OK (i.e. 200), we deserialize the JSON response and print out the data. If the status code is anything else, we handle the error by printing out the error message returned by the API.
+
+Note that this is just one example of how you could handle errors from the Microsoft Graph API. Depending on your specific use case, you may need to handle errors differently.
+
+> Which rights do I need to read https://graph.microsoft.com/v1.0/users ?
+
+To read the list of users using the Microsoft Graph API, you will need to have the appropriate permissions assigned to your Azure AD application.
+
+To access the /v1.0/users endpoint in the Microsoft Graph API, you will need to have the User.Read.All, User.ReadWrite.All, or Directory.Read.All permission assigned to your Azure AD application.
+
+The User.Read.All permission allows your application to read the profile information of all users in the organization. The User.ReadWrite.All permission allows your application to read and write the profile information of all users in the organization. The Directory.Read.All permission allows your application to read all directory data in the organization.
+
+Note that these permissions are quite powerful and should be used with caution. Make sure that you understand the implications of granting these permissions to your application, and follow best practices for securing your application and its credentials.
+
+> This "#[derive(Debug, Serialize, Deserialize)]
+> struct User {
+>    id: String,
+>    display_name: String,
+> }" doesn't work as the JSON contains displayName isntead of display)name. 
+
+You're correct that the User struct defined in your Rust code doesn't match the JSON returned by the Microsoft Graph API. Specifically, the display_name field in your Rust code doesn't match the displayName field in the JSON.
+
+To fix this issue, you can use the serde attribute #[serde(rename = "json_field_name")] to tell the serde serializer how to map the Rust field to the JSON field. Here's an example of how you could modify your User struct to handle the displayName field:
+
+```rust
+#[derive(Debug, Serialize, Deserialize)]
+struct User {
+    id: String,
+    #[serde(rename = "displayName")]
+    display_name: String,
+}
+```
+
+In this example, we've added the #[serde(rename = "displayName")] attribute to the display_name field, which tells the serde serializer to map the display_name field in Rust to the displayName field in the JSON. This should allow you to correctly deserialize the JSON response from the Microsoft Graph API into your Rust User struct.

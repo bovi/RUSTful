@@ -8,8 +8,10 @@
   "customizations": {
     "vscode": {
       "extensions": [
+        "GitHub.copilot-nightly",
+        "GitHub.copilot-labs",
         "rust-lang.rust-analyzer"
-      ]
+      ],
     }
   }
 }
