@@ -21,7 +21,7 @@ https://github.com/bovi/RUSTfull/commit/719a0a1cbbb72f1bd4d7472c7f268268c448fefd
 https://github.com/bovi/RUSTfull/commit/15d09997f7fceaabcba2696a3ad0a4a8e174a064)
 
 *Conversation with ChatGPT:*
-[L1](https://github.com/bovi/RUSTful/blob/main/chat.md?plain=1#L1)-[L787](https://github.com/bovi/RUSTful/blob/main/chat.md?plain=1#L787)
+https://github.com/bovi/RUSTfull/blob/main/chat.md#2023-03-05
 
 *General notes:*
 ChatGPT can provide accurate API addresses. There are some bugs in the
@@ -34,7 +34,7 @@ Rust code it created but when I pointed it to it, it always fixed them.
 https://github.com/bovi/RUSTfull/commit/8a7ccbe9c321f317726bde129d0d5911fdbdc465)
 
 *Conversation with ChatGPT:*
-[L788](https://github.com/bovi/RUSTful/blob/main/chat.md?plain=1#L788)-[L929](https://github.com/bovi/RUSTful/blob/main/chat.md?plain=1#L929)
+https://github.com/bovi/RUSTfull/blob/main/chat.md#2023-03-06
 
 *General notes:*
 ChatGPT mistakenly used the wrong GET and POST parameter. After asking
