@@ -40,3 +40,17 @@ https://github.com/bovi/RUSTfull/blob/main/chat.md#2023-03-06
 ChatGPT mistakenly used the wrong GET and POST parameter. After asking
 it was able to fix it. Also today was the first successfull call to list
 all users.
+
+## Day 3 (2023-03-10)
+
+*The following commits were perform today:*
+[62fbc33](https://github.com/bovi/RUSTfull/commit/62fbc33)
+
+*Conversation with ChatGPT:*
+https://github.com/bovi/RUSTfull/blob/main/chat.md#2023-03-10
+
+*General notes:*
+ChatGPT managed to provide a working OAuth2 implementation for device_codes.
+It also created a nice way to catch an authentication flow via a local web server.
+It failed in using unreasonable intervals. Also it had difficulties to convert
+structs proper and manage structs and async (await) implementations.
