@@ -54,3 +54,7 @@ ChatGPT managed to provide a working OAuth2 implementation for device_codes.
 It also created a nice way to catch an authentication flow via a local web server.
 It failed in using unreasonable intervals. Also it had difficulties to convert
 structs proper and manage structs and async (await) implementations.
+So far ChatGPT creates sometimes code which is not valid, these kind of bugs
+can be found easily by the rust-analyzer or the rust compiler. But it also
+creates logic bugs (e.g. the expired token bug). These kind of bugs are
+not possible to find with the rust toolchain.
